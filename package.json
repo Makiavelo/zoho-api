@@ -1,6 +1,6 @@
 {
   "name": "zoho-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -8,6 +8,10 @@
   },
   "author": "",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Makiavelo/zoho-api.git"
+  },
   "dependencies": {
     "axios": "^0.25.0",
     "debug": "^4.3.3",
