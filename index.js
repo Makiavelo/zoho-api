@@ -1,5 +1,9 @@
-class ZohoApi {
+const Api = require('./zoho-api');
+const Oauth = require('./oauth');
+const Token = require('./token');
 
-}
-
-module.exports = ZohoApi
+module.exports = {
+    Api,
+    Oauth,
+    Token
+};
