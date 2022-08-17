@@ -25,10 +25,11 @@ const Oauth = require('./oauth');
  */
 class ZohoApi {
     constructor(options) {
+        console.log('NEW ZOHO API VERSION');
         this.options = _.defaultsDeep(options, this.defaultOptions());
         this.accessToken = '';
 
-        this.oauth = new Oauth({ file: this.opt('tokenFile') });
+        this.oauth = new Oauth(options);
 
         this.axios = axios.create({
             baseURL: this.opt('apiBaseUrl'),
@@ -77,8 +78,8 @@ class ZohoApi {
      * @throws
      */
     checkSetup() {
-        if (this.oauth.validFile()) {
-            let token = this.oauth.getLatestToken();
+        if (this.oauth.valid()) {
+            let token = this.oauth.getToken();
             if (!token) {
                 throw 'No tokens found in tokens file, run "setup" function with a grant token';
             }
@@ -111,7 +112,7 @@ class ZohoApi {
 
         return this.api('POST', url, {}, { auth: false })
             .then((response) => {
-                this.oauth.saveFile(response.data);
+                this.oauth.save(response.data);
                 this.options.accessToken = response.data.access_token;
                 debug('Tokens file created successfully!');
                 debug('Path: ' + this.oauth.file);
@@ -170,23 +171,24 @@ class ZohoApi {
      * @returns {Promise}
      */
     async auth() {
-        return new Promise((resolve, reject) => {
-            let token = this.oauth.getLatestToken();
+        return new Promise(async (resolve, reject) => {
+            let token = await this.oauth.getToken();
             if (!token) {
                 throw 'No tokens found in tokens file, run "setup" function with a grant token';
             } else if (token.expired()) {
+                let refreshToken = await this.oauth.getRefreshToken();
                 let params = {
                     grant_type: 'refresh_token',
                     client_id: this.opt('clientId'),
                     client_secret: this.opt('clientSecret'),
-                    refresh_token: this.oauth.refreshToken()
+                    refresh_token: refreshToken
                 };
                 
                 let url = this.opt('oauthUrl') + '?' + qs.stringify(params);
 
                 this.api('POST', url, {}, { auth: false })
                     .then((response) => {
-                        this.oauth.saveFile(response.data);
+                        this.oauth.save(response.data);
                         this.options.accessToken = response.data.access_token;
                         resolve();
                     })

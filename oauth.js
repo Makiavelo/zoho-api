@@ -1,5 +1,5 @@
 const debug = require('debug')('zoho-api:oauth');
-const fs = require('fs');
+const FileStorage = require('./storage/file');
 const _ = require('lodash');
 const Token = require('./token');
 
@@ -8,7 +8,19 @@ const Token = require('./token');
  */
 class Oauth {
     constructor(options = {}) {
-        this.file = _.get(options, 'file', '');
+        console.log(JSON.stringify(options, null, 2));
+        this.storageType = _.get(options, 'storageType', 'file');
+
+        if (this.storageType === 'file') {
+            console.log('File storage');
+            this.storage = new FileStorage(options);
+        } else if (this.storageType === 'custom') {
+            this.storage = _.get(options, 'storage');
+        }
+
+        if (typeof this.storage === 'undefined' || !this.storage) {
+            throw('No storage defined.');
+        }
     }
 
     /**
@@ -16,12 +28,8 @@ class Oauth {
      * 
      * @returns {boolean}
      */
-    validFile() {
-        try {
-            return fs.existsSync(this.file);
-        } catch(err) {
-            return false;
-        }
+    valid() {
+        return this.storage.valid();
     }
 
     /**
@@ -29,45 +37,8 @@ class Oauth {
      * 
      * @param {object} json New entry for the token responses
      */
-    saveFile(json) {
-        try {
-            let data = this.getAllTokens();
-            if (!data) {
-                data = this.getDefaultStructure();
-            } else {
-                // Keep latest 9 records
-                data.tokenResponses = _.takeRight(data.tokenResponses, 9);
-            }
-
-            json.issuedAt = Math.floor(Date.now() / 1000);
-
-            // Update the refresh token if it's available in the response
-            let refreshToken = _.get(json, 'refresh_token');
-            if (refreshToken) {
-                data.refreshToken = refreshToken;
-            }
-
-            // Add latest record
-            data.tokenResponses.push(json);
-            debug(data);
-
-            fs.writeFileSync(this.file, JSON.stringify(data));
-        } catch (err) {
-            debug('Failed to save to tokens file');
-            throw err;
-        }
-    }
-
-    /**
-     * Get the default json structure for the tokens file
-     * 
-     * @returns {object}
-     */
-    getDefaultStructure() {
-        return {
-            refreshToken: '',
-            tokenResponses: []
-        };
+    save(json) {
+        this.storage.save(json);
     }
 
     /**
@@ -76,36 +47,9 @@ class Oauth {
      * @returns {object}
      * @throws
      */
-    getAllTokens() {
-        try {
-            const json = fs.readFileSync(this.file, 'utf8')
-            if (json) {
-                let data = JSON.parse(json);
-                debug(data);
-                return data;
-            } else {
-                return false;
-            }
-        } catch (err) {
-            return null;
-        }
-    }
-
-    /**
-     * Get the latest token generated from the tokens file
-     * 
-     * @returns {Token}
-     */
-    getLatestToken() {
-        let tokens = this.getAllTokens();
-        debug('Tokens: ');
-        debug(tokens);
-        if (tokens && tokens.tokenResponses) {
-            let token = new Token(_.last(tokens.tokenResponses));
-            return token;
-        }
-
-        return false;
+    async getToken() {
+        let data = await this.storage.getToken();
+        return new Token(data);
     }
 
     /**
@@ -113,9 +57,13 @@ class Oauth {
      * 
      * @returns {string}
      */
-    refreshToken() {
-        let tokens = this.getAllTokens();
-        return _.get(tokens, 'refreshToken', '');
+    async getRefreshToken() {
+        let token = await this.getToken();
+        if (token) {
+            return token.refreshToken();
+        }
+
+        return '';
     }
 }
 

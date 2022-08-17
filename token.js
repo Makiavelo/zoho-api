@@ -21,6 +21,15 @@ class Token {
         return false;
     }
 
+    getData() {
+        return this.data;
+    }
+
+    setData(data) {
+        this.data = data;
+        return this;
+    }
+
     /**
      * Check if the token expired, based on it's Time To Live and the
      * creation date.
@@ -51,6 +60,15 @@ class Token {
      */
     accessToken() {
         return this.data.access_token;
+    }
+
+    /**
+     * Get the refresh token
+     * 
+     * @returns {string}
+     */
+     refreshToken() {
+        return this.data.refresh_token;
     }
 }
 
