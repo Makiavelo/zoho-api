@@ -8,11 +8,9 @@ const Token = require('./token');
  */
 class Oauth {
     constructor(options = {}) {
-        console.log(JSON.stringify(options, null, 2));
         this.storageType = _.get(options, 'storageType', 'file');
 
         if (this.storageType === 'file') {
-            console.log('File storage');
             this.storage = new FileStorage(options);
         } else if (this.storageType === 'custom') {
             this.storage = _.get(options, 'storage');

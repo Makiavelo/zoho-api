@@ -25,7 +25,6 @@ const Oauth = require('./oauth');
  */
 class ZohoApi {
     constructor(options) {
-        console.log('NEW ZOHO API VERSION');
         this.options = _.defaultsDeep(options, this.defaultOptions());
         this.accessToken = '';
 

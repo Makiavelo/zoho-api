@@ -54,7 +54,6 @@ class File {
      * @throws
      */
     async getToken(reload = false) {
-        console.log('GET TOKEN!')
         if (this.token && !reload) {
             return this.token;
         } else {
