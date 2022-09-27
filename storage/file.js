@@ -32,6 +32,8 @@ class File {
      */
     save(json) {
         try {
+            this.token = {};
+            this.token.refresh_token = _.get(json, 'refresh_token', '');
             this.token.access_token = json.access_token;
             this.token.api_domain = json.api_domain;
             this.token.token_type = json.token_type;
